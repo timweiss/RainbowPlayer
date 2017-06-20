@@ -22,6 +22,7 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.MouseEvent;
 import rainbowplayer.Classes.Duration;
@@ -47,6 +48,9 @@ public class FXMLDocumentController implements Initializable {
     
     private HashMap<String, String> playerData = null;
     
+    // Track Queue Data
+    private ArrayList<PlaylistEntry> trackQueue = new ArrayList<>();
+    
    
     @FXML
     private Label ChildTitleLabel;
@@ -63,6 +67,11 @@ public class FXMLDocumentController implements Initializable {
     private Label ChildCurrentTimeLabel;
     @FXML
     private Label playlistLabel;
+    
+    @FXML
+    private Slider volumeSlider;
+    @FXML
+    private Slider trackPositionSlider;
     
     @FXML
     private Label ChildTrackNrTracklistLabel;
@@ -276,7 +285,8 @@ public class FXMLDocumentController implements Initializable {
     
     @FXML
     private void handleEmptyQueueButtonAction(ActionEvent event) {
-        
+        if(!trackQueue.isEmpty())
+            trackQueue.clear();
     }
     
     @FXML
@@ -301,7 +311,8 @@ public class FXMLDocumentController implements Initializable {
     
     @FXML
     private void handlePlayAllQueueButtonAction(ActionEvent event) {
-        
+        songPlayer.playTitleQueue(trackQueue);
+        startTimer();
     }
     
     @FXML
@@ -366,7 +377,15 @@ public class FXMLDocumentController implements Initializable {
     
     @FXML
     private void handleAddToQueueTracklistButtonAction(ActionEvent event) {
-        
+        int clickedIndex = ChildTracklistList.getSelectionModel().getSelectedIndex();
+            if(clickedIndex <= trackCount){
+                Track clickedTrack = trackList.get(clickedIndex);
+                PlaylistEntry qTrack = new PlaylistEntry(clickedTrack);
+
+                trackQueue.add(qTrack);
+            }
+            
+        updateQueueList();
     }  
     
     @FXML
@@ -409,12 +428,20 @@ public class FXMLDocumentController implements Initializable {
             ChildTitleLabel.setText(songPlayer.getPlayingTrack().getTitleName());
             ChildAuthorLabel.setText(songPlayer.getPlayingTrack().getArtistName());
             
-            Duration durTotal = songPlayer.getPlayingTrack().getRemainingDuration();
+            Duration durTotal = songPlayer.getPlayingTrack().getTotalDuration();
             Duration durRemaining = songPlayer.getPlayingTrack().getRemainingDuration();
+            
+            Duration durPlayed = new Duration();
+            durPlayed.setTotalSeconds(durTotal.getTotalSeconds() - durRemaining.getTotalSeconds());
             
             ChildRemainTimeLabel.setText(durRemaining.getMinutes() + ":" + durRemaining.getSeconds());
             ChildTotalTimeLabel.setText(durTotal.getMinutes() + ":" + durTotal.getSeconds());
-            ChildCurrentTimeLabel.setText(Integer.toString(Integer.parseInt(ChildTotalTimeLabel.getText()) - Integer.parseInt(ChildRemainTimeLabel.getText())));
+            ChildCurrentTimeLabel.setText(durPlayed.getMinutes() + ":" + durPlayed.getSeconds());
+            
+            if(durPlayed.getTotalSeconds() != (int) trackPositionSlider.getMax())
+                trackPositionSlider.setMax(durTotal.getTotalSeconds());
+            
+            trackPositionSlider.setValue(durPlayed.getTotalSeconds());
             
             if(songPlayer.getPlaylist() != null){
                 playlistLabel.setText(songPlayer.getPlaylist().getName());
@@ -428,5 +455,27 @@ public class FXMLDocumentController implements Initializable {
             ChildCurrentTimeLabel.setText("00:00:00");
             
         }
+    }
+    
+    /**
+     * Refresh/Populate 
+     */
+    private void updateQueueList(){
+        ArrayList<String> trackTitles = new ArrayList<>();
+        
+        for(PlaylistEntry pe : trackQueue){
+            trackTitles.add(pe.getTrack().getFormattedTitle());
+        }
+        setListContent(ChildQueueList,trackTitles);
+    }
+    
+    @FXML
+    private void handleVolumeSliderDragged(ActionEvent event) {
+        
+    }
+    
+    @FXML
+    private void handleTrackPositionSliderDragged(ActionEvent event) {
+        
     }
 }

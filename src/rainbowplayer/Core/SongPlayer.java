@@ -60,6 +60,8 @@ public class SongPlayer {
      * @param tQueue The ArrayList of titles
      */
     public void playTitleQueue(ArrayList<PlaylistEntry> tQueue) {
+        if(tQueue.isEmpty())
+            return;
         stopPlayback();
         titleQueue2 = tQueue;
         isQueued = true;
@@ -116,6 +118,7 @@ public class SongPlayer {
         // we need to run the timer after the player loaded the song
         mediaPlayer.setOnReady(() -> {
             currentTrack.setDuration((int) tMedia.getDuration().toSeconds());
+            currentTrack.setTotalSeconds((int) tMedia.getDuration().toSeconds());
             trackStarted();
         });
     }
